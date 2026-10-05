@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
-    <link rel="apple-touch-icon" href="icon.png">
     
-    <title>Локальный Трекер Тренировок • Прогрессия</title>
+    <title>Трекер тренировок</title>
     <style>
         :root {
             --bg-color: #121212; --card-bg: #1e1e1e; --accent-color: #00adb5;
@@ -30,7 +29,7 @@
         button { background-color: var(--accent-color); cursor: pointer; font-weight: bold; }
         button:active { transform: scale(0.98); }
 
-        /* === Навигация: выпадающий список модулей === */
+        /* Навигация */
         .nav-bar {
             position: sticky; top: 0; z-index: 900;
             background: var(--bg-color); padding: 12px 0 8px;
@@ -61,7 +60,7 @@
         }
         .nav-backdrop.open { display: block; }
 
-        /* === Добавки === */
+        /* Добавки */
         .supp-row {
             display: flex; align-items: center; justify-content: space-between; gap: 12px;
             background: #252525; border-radius: 8px; padding: 12px; margin-top: 10px;
@@ -116,7 +115,6 @@
         .ex-controls { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
         .unit-select { width: auto; padding: 4px 8px; font-size: 12px; border-radius: 4px; }
         .btn-remove-ex { background: transparent; border: none; color: var(--danger-color); width: auto; padding: 0 6px; font-size: 18px; }
-        .tempo-tag { background: #393e46; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--warning-color); }
 
         .timer-panel {
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -166,7 +164,7 @@
         .cal-day { aspect-ratio: 1; border-radius: 3px; background: #333; position: relative; }
         .cal-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
 
-        /* === НОВЫЕ СТИЛИ ДЛЯ ПРОГРЕССИИ === */
+        /* Рекомендации, плато, рекорды */
         .suggestion-box {
             background: #1f2a2e;
             border: 1px solid #00adb5;
@@ -199,7 +197,33 @@
             font-weight: bold;
         }
 
-        /* PR Modal */
+        /* Окно импорта */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: var(--card-bg); border-radius: 16px; padding: 20px;
+            max-width: 420px; width: 92%; border: 1px solid #444;
+        }
+        .modal-content h3 { margin-top: 0; }
+        .import-summary {
+            background: #252525; border-radius: 8px; padding: 10px 12px; margin: 10px 0 14px;
+            font-size: 14px; line-height: 1.6;
+        }
+        .modal-content button + button { margin-top: 8px; }
+
+        /* Список упражнений */
+        .ex-manager summary { cursor: pointer; font-weight: bold; font-size: 16px; list-style: none; }
+        .ex-manager summary::-webkit-details-marker { display: none; }
+        .ex-manager summary::after { content: ' ▼'; color: var(--accent-color); font-size: 12px; }
+        .ex-manager[open] summary::after { content: ' ▲'; }
+        .ex-manager h4 { color: var(--text-muted); font-size: 13px; margin: 14px 0 6px; }
+        .ex-manager .log-item { gap: 10px; }
+        .ex-manager .log-item span { word-break: break-word; }
+
+        /* Окно рекордов */
         .pr-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -263,7 +287,7 @@
     </div>
     <div id="nav-backdrop" class="nav-backdrop" onclick="closeNav()"></div>
 
-    <!-- ==================== WORKOUT TAB ==================== -->
+    <!-- Тренировка -->
     <div id="tab-workout" class="tab-content">
         <div class="workout-section" id="session-start">
             <h2>🏋️ Тренировка</h2>
@@ -318,9 +342,14 @@
                 <button onclick="cancelSession()" style="background-color: var(--danger-color); flex:0 0 35%;">✕ Отмена</button>
             </div>
         </div>
+
+        <details class="workout-section ex-manager" id="ex-manager" ontoggle="if (this.open) renderExerciseManager()">
+            <summary>✏️ Мои упражнения</summary>
+            <div id="ex-manager-list"></div>
+        </details>
     </div>
 
-    <!-- ==================== HISTORY TAB ==================== -->
+    <!-- История -->
     <div id="tab-history" class="tab-content" style="display:none;">
         <div class="workout-section">
             <h2>📜 Календарь активности (42 дня)</h2>
@@ -339,7 +368,7 @@
         <div id="history-container"></div>
     </div>
 
-    <!-- ==================== CHARTS TAB ==================== -->
+    <!-- Графики -->
     <div id="tab-charts" class="tab-content" style="display:none;">
         <div class="workout-section"><h2>📊 Графики прогрессии</h2></div>
         
@@ -360,13 +389,13 @@
         <div class="workout-section"><h3>Сауна (14 дней, минут)</h3><div id="chart-sauna"></div></div>
     </div>
 
-    <!-- ==================== OTHER TABS (unchanged) ==================== -->
+    <!-- Остальные модули -->
     <div id="tab-water" class="tab-content" style="display:none;">
         <div class="workout-section">
             <h2>💧 Вода</h2>
             <div style="display:flex; justify-content: space-between;">
                 <span>Сегодня выпито:</span>
-                <span class="vol-tag"><span id="water-today">0</span> / 2000 мл</span>
+                <span class="vol-tag"><span id="water-today">0</span> / <span id="water-goal">2000</span> мл</span>
             </div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="water-progress"></div>
@@ -380,6 +409,12 @@
             <div class="row-flex" style="margin-top:10px;">
                 <input id="water-input" type="number" inputmode="decimal" placeholder="мл вручную">
                 <button class="small-btn" style="flex:0 0 35%;" onclick="addWaterManual()">Добавить</button>
+            </div>
+            <hr style="border: 0.5px solid #333; margin: 16px 0 10px;">
+            <label for="water-goal-input">Цель в день, мл:</label>
+            <div class="row-flex">
+                <input id="water-goal-input" type="number" inputmode="numeric" min="100" step="50">
+                <button class="small-btn" style="flex:0 0 35%; background:#393e46;" onclick="saveWaterGoal()">Сохранить</button>
             </div>
         </div>
         <div class="workout-section">
@@ -501,7 +536,7 @@
         </div>
     </div>
 
-    <!-- ==================== TIMER PANEL ==================== -->
+    <!-- Таймер отдыха -->
     <div class="timer-panel" id="timer-panel">
         <div class="timer-top">
             <div>⏱️ Отдых</div>
@@ -514,7 +549,7 @@
         </div>
     </div>
 
-    <!-- ==================== PR MODAL ==================== -->
+    <!-- Окно рекордов -->
     <div id="pr-modal" class="pr-modal" onclick="if (event.target.id === 'pr-modal') hidePRModal()">
         <div class="pr-modal-content" onclick="event.stopImmediatePropagation()">
             <h2>🎉 Новые рекорды!</h2>
@@ -523,13 +558,23 @@
         </div>
     </div>
 
+    <div id="import-modal" class="modal" onclick="if (event.target === this) cancelImport()">
+        <div class="modal-content">
+            <h3>Импорт данных</h3>
+            <div id="import-summary" class="import-summary"></div>
+            <button onclick="applyImport('merge')">Добавить к текущим</button>
+            <button onclick="applyImport('replace')" style="background-color: var(--danger-color);">Заменить всё (текущие данные удалятся)</button>
+            <button onclick="cancelImport()" style="background:#393e46; color:var(--text-color);">Отмена</button>
+        </div>
+    </div>
+
     <script>
-        // ===================== PWA =====================
+        // Service worker (офлайн-режим)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
-        // ===================== STORAGE =====================
+        // Хранилище (только localStorage на устройстве)
         const DEFAULT_DB = {
             "Грудь": ["Жим штанги лежа", "Разведение гантелей на наклонной лавке"],
             "Спина": ["Подтягивания / Тяга верхнего блока", "Тяга штанги в наклоне"],
@@ -542,19 +587,65 @@
             sauna: 'sauna_log', pool: 'pool_log',
             sleep: 'sleep_log', caffeine: 'caffeine_log',
             units: 'exercise_units', draft: 'workout_draft',
-            pr_log: 'pr_log',   // NEW: PR history
-            supplements: 'supplements_log'
+            pr_log: 'pr_log',
+            supplements: 'supplements_log',
+            exdb: 'exercise_db', waterGoal: 'water_goal'
         };
+        // Журналы, которые входят в экспорт/импорт (ключ в localStorage = ключ в файле)
+        const LOG_KEYS = [LS.history, LS.water, LS.weight, LS.sauna, LS.pool, LS.sleep, LS.caffeine, LS.supplements, LS.pr_log];
+        const LOG_TITLES = {
+            [LS.history]: 'Тренировки', [LS.water]: 'Вода', [LS.weight]: 'Вес', [LS.sauna]: 'Сауна',
+            [LS.pool]: 'Бассейн', [LS.sleep]: 'Сон', [LS.caffeine]: 'Кофеин', [LS.supplements]: 'Добавки', [LS.pr_log]: 'Рекорды'
+        };
+        // Журналы, где у каждой записи должен быть свой id (по нему работает удаление)
+        const SIMPLE_LOGS = [LS.water, LS.weight, LS.sauna, LS.pool, LS.sleep, LS.caffeine, LS.supplements];
         const get = (k) => JSON.parse(localStorage.getItem(k) || '[]');
         const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
         const getObj = (k) => JSON.parse(localStorage.getItem(k) || '{}');
         const setObj = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-        function getDB() {
-            const custom = getObj(LS.custom);
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        // Уникальный id записи. Время записи хранится отдельно в ts, поэтому
+        // две записи с одинаковым временем больше не получают одинаковый id.
+        let lastId = 0;
+        function makeId() {
+            const id = Math.max(Date.now(), lastId + 1);
+            lastId = id;
+            return id;
+        }
+        function fixDuplicateIds() {
+            SIMPLE_LOGS.forEach(key => {
+                const list = get(key), seen = new Set();
+                let changed = false;
+                list.forEach(x => {
+                    if (x.id == null || seen.has(String(x.id))) { x.id = makeId(); changed = true; }
+                    seen.add(String(x.id));
+                });
+                if (changed) set(key, list);
+            });
+        }
+
+        // Список упражнений хранится целиком, чтобы любое можно было переименовать
+        function buildDB(custom = {}) {
             const db = {};
             for (const g of Object.keys(DEFAULT_DB)) db[g] = [...DEFAULT_DB[g], ...(custom[g] || [])];
             return db;
+        }
+        function getDB() {
+            let db = getObj(LS.exdb);
+            if (!Object.keys(db).length) {
+                db = buildDB(getObj(LS.custom));
+                setObj(LS.exdb, db);
+                localStorage.removeItem(LS.custom);
+            }
+            for (const g of Object.keys(DEFAULT_DB)) if (!db[g]) db[g] = [];
+            return db;
+        }
+        function exerciseExists(name, except = null) {
+            const n = name.toLowerCase();
+            return Object.values(getDB()).some(list => list.some(x => x !== except && x.toLowerCase() === n));
         }
 
         const LB_TO_KG = 0.45359237;
@@ -617,7 +708,7 @@
             updateTimerPanel();
         }
 
-        // ===================== DATE UTILS =====================
+        // Даты
         function todayKey() {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -634,7 +725,7 @@
             return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
         function nowStamp(ts = Date.now()) {
-            return { id: ts, ts: ts, day: dayFromTs(ts),
+            return { id: makeId(), ts: ts, day: dayFromTs(ts),
                 date: new Date(ts).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) };
         }
         function fmtTime(sec) {
@@ -650,12 +741,12 @@
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
-        // ===================== PROGRESSION HELPERS (NEW) =====================
+        // Прогрессия: 1ПМ, рекорды, рекомендации, плато
         function calculateE1RM(weight, reps) {
             const w = parseFloat(weight) || 0;
             const r = parseFloat(reps) || 0;
             if (r < 1) return w;
-            return w * (1 + r / 30); // Epley formula
+            return w * (1 + r / 30); // формула Эпли
         }
 
         function getBestE1RM(workingSets, unit = 'kg') {
@@ -669,7 +760,6 @@
             return Math.round(best * 10) / 10;
         }
 
-        // Detect new PRs when saving workout
         function detectNewPRs(sessionData) {
             const prs = get(LS.pr_log);
             const newPRs = [];
@@ -681,13 +771,15 @@
                 const currentMaxWeight = Math.max(...ex.working.map(s => parseFloat(s.weight) || 0));
                 const currentE1RM = getBestE1RM(ex.working, unit);
 
-                // Find historical max
                 let historicalMaxWeight = 0;
                 let historicalMaxE1RM = 0;
+                let hasHistory = false;
 
-                get(LS.history).forEach(oldSession => {
+                // Сравниваем только с прошлыми тренировками, без текущей
+                get(LS.history).filter(s => s.id !== sessionData.id).forEach(oldSession => {
                     const oldEx = (oldSession.exercises || []).find(e => e.exerciseName === ex.exerciseName);
-                    if (oldEx && oldEx.working) {
+                    if (oldEx && oldEx.working && oldEx.working.length) {
+                        hasHistory = true;
                         const w = Math.max(...oldEx.working.map(s => parseFloat(s.weight) || 0));
                         const e = getBestE1RM(oldEx.working, oldEx.unit || 'kg');
                         if (w > historicalMaxWeight) historicalMaxWeight = w;
@@ -695,7 +787,9 @@
                     }
                 });
 
-                // Check weight PR
+                // Первый раз в упражнении — это точка отсчёта, а не рекорд
+                if (!hasHistory) return;
+
                 if (currentMaxWeight > historicalMaxWeight && currentMaxWeight > 0) {
                     newPRs.push({
                         type: 'weight',
@@ -707,7 +801,6 @@
                     });
                 }
 
-                // Check E1RM PR
                 if (currentE1RM > historicalMaxE1RM && currentE1RM > 0) {
                     newPRs.push({
                         type: 'e1rm',
@@ -721,9 +814,8 @@
             });
 
             if (newPRs.length > 0) {
-                // Save PRs
                 newPRs.forEach(pr => prs.unshift(pr));
-                set(LS.pr_log, prs.slice(0, 200)); // keep last 200
+                set(LS.pr_log, prs.slice(0, 200));
                 showPRModal(newPRs);
             }
         }
@@ -738,14 +830,13 @@
                     ? `${pr.old} → ${pr.new} ${pr.unit}`
                     : `1ПМ ${pr.old} → ${pr.new} ${pr.unit}`;
                 html += `<div class="pr-item">
-                    <strong>${pr.exercise}</strong><br>
+                    <strong>${esc(pr.exercise)}</strong><br>
                     <span style="color:#ffd369">${change}</span>
                 </div>`;
             });
             list.innerHTML = html;
             modal.style.display = 'flex';
 
-            // Simple confetti
             for (let i = 0; i < 25; i++) {
                 setTimeout(() => createConfetti(modal), i * 8);
             }
@@ -766,82 +857,44 @@
             document.getElementById('pr-modal').style.display = 'none';
         }
 
-        // Smart suggestion based on last performance
-        function getSmartSuggestion(lastWorking) {
+        // Рекомендация на сегодня по RPE/RIR прошлой тренировки
+        function getSmartSuggestion(lastWorking, unit = 'kg') {
             if (!lastWorking || lastWorking.length === 0) return null;
 
-            let totalRPE = 0, totalRIR = 0, count = 0;
+            let totalRPE = 0, count = 0;
             lastWorking.forEach(s => {
-                const rpe = parseFloat(s.rpe) || 0;
-                const rir = parseFloat(s.rir) || 0;
-                if (rpe > 0 || rir > 0) {
-                    totalRPE += rpe || (10 - rir);
-                    totalRIR += rir || (10 - rpe);
-                    count++;
-                }
+                const rpe = parseFloat(s.rpe), rir = parseFloat(s.rir);
+                if (!isNaN(rpe) && rpe > 0) { totalRPE += rpe; count++; }
+                else if (!isNaN(rir)) { totalRPE += 10 - rir; count++; }
             });
             if (count === 0) return null;
 
             const avgRPE = totalRPE / count;
-            const avgRIR = totalRIR / count;
-
-            let suggestion = '';
-            let action = '';
-
-            if (avgRPE <= 7.5 && avgRIR >= 2.5) {
-                suggestion = `+2.5 кг (RPE ${avgRPE.toFixed(1)}, RIR ${avgRIR.toFixed(1)})`;
-                action = 'increase_weight';
-            } else if (avgRPE <= 8.5 && avgRIR >= 1.5) {
-                suggestion = `+1 повтор или +1.25 кг`;
-                action = 'increase_reps_or_small_weight';
-            } else {
-                suggestion = `Сохрани вес (RPE ${avgRPE.toFixed(1)})`;
-                action = 'maintain';
-            }
-            return { text: suggestion, action, avgRPE, avgRIR };
+            const step = unit === 'lb' ? 5 : 2.5;
+            if (avgRPE <= 7.5) return { action: 'weight', step, text: `+${step} ${unitLabel(unit)} к весу (средний RPE ${avgRPE.toFixed(1)})` };
+            if (avgRPE <= 8.5) return { action: 'reps', step: 0, text: `+1 повтор в каждом подходе (средний RPE ${avgRPE.toFixed(1)})` };
+            return { action: 'same', step: 0, text: `Тот же вес и повторы (средний RPE ${avgRPE.toFixed(1)})` };
         }
 
-        // Plateau detection (last 21+ days no progress)
+        // Плато: лучший расчётный 1ПМ не растёт 21+ день и после него было минимум 2 тренировки
         function checkPlateau(exerciseName) {
-            const hist = get(LS.history);
-            const relevant = hist
-                .filter(s => (s.exercises || []).some(e => e.exerciseName === exerciseName))
-                .slice(0, 8); // last 8 sessions max
+            const sessions = get(LS.history)
+                .map(s => ({ ts: s.id, ex: (s.exercises || []).find(e => e.exerciseName === exerciseName && e.working && e.working.length) }))
+                .filter(x => x.ex && x.ts)
+                .sort((a, b) => a.ts - b.ts);
+            if (sessions.length < 3) return null;
 
-            if (relevant.length < 3) return null;
-
-            let lastMax = 0;
-            let daysSinceProgress = 0;
-            const now = Date.now();
-
-            for (let i = 0; i < relevant.length; i++) {
-                const ex = relevant[i].exercises.find(e => e.exerciseName === exerciseName);
-                if (!ex || !ex.working) continue;
-
-                const maxW = Math.max(...ex.working.map(s => parseFloat(s.weight) || 0));
-                const e1rm = getBestE1RM(ex.working, ex.unit || 'kg');
-
-                if (i === 0) {
-                    lastMax = Math.max(maxW, e1rm);
-                } else {
-                    const currentMax = Math.max(maxW, e1rm);
-                    if (currentMax > lastMax + 0.5) {
-                        return null; // progress found
-                    }
-                }
+            let best = 0, bestTs = sessions[0].ts, sinceBest = 0;
+            for (const s of sessions) {
+                const v = getBestE1RM(s.ex.working, s.ex.unit || 'kg');
+                if (v > best + 0.5) { best = v; bestTs = s.ts; sinceBest = 0; }
+                else sinceBest++;
             }
-
-            // Calculate days since last session
-            const lastSessionTs = relevant[0].id || Date.now();
-            daysSinceProgress = Math.floor((now - lastSessionTs) / (1000 * 3600 * 24));
-
-            if (daysSinceProgress >= 21) {
-                return `${daysSinceProgress} дней`;
-            }
-            return null;
+            const days = Math.floor((Date.now() - bestTs) / 86400000);
+            return (days >= 21 && sinceBest >= 2) ? days : null;
         }
 
-        // ===================== TIMERS & SESSION =====================
+        // Таймеры и сессия
         let sessionActive = false, startTime = 0, lastSetTime = 0;
         let restEndTime = null, restInterval = null, audioCtx = null, draftInterval = null;
 
@@ -884,7 +937,7 @@
                     const rir = row.querySelector('.inp-rir').value;
                     const rest = row.querySelector('.btn-check').getAttribute('data-actual-rest') || '0:00';
                     const done = row.querySelector('.btn-check').classList.contains('done');
-                    working.push({ weight: w, reps: r, rpe, rir, tempo: '3-0-1-0', rest, done });
+                    working.push({ weight: w, reps: r, rpe, rir, rest, done });
                 });
                 
                 if (warmup.length || working.length) {
@@ -1009,24 +1062,91 @@
             endSessionUI();
         }
 
-        // ===================== EXERCISES =====================
+        // Упражнения
         function populateExercises() {
             const group = document.getElementById('muscle-group').value;
             const sel = document.getElementById('exercise-select');
-            sel.innerHTML = (getDB()[group] || []).map(n => `<option value="${n}">${n}</option>`).join('');
+            sel.innerHTML = (getDB()[group] || []).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
         }
 
         function addCustomExercise() {
             const group = document.getElementById('muscle-group').value;
             const name = (prompt(`Название упражнения для группы "${group}":`) || '').trim();
             if (!name) return;
-            if (getDB()[group].includes(name)) { alert('Такое упражнение уже есть.'); return; }
-            const custom = getObj(LS.custom);
-            custom[group] = custom[group] || [];
-            custom[group].push(name);
-            setObj(LS.custom, custom);
+            if (exerciseExists(name)) { alert('Такое упражнение уже есть.'); return; }
+            const db = getDB();
+            db[group].push(name);
+            setObj(LS.exdb, db);
             populateExercises();
             document.getElementById('exercise-select').value = name;
+            renderExerciseManager();
+        }
+
+        function renderExerciseManager() {
+            const c = document.getElementById('ex-manager-list');
+            if (!c) return;
+            const db = getDB();
+            c.innerHTML = Object.keys(db).map(g => `
+                <h4>${esc(g)}</h4>
+                ${db[g].length ? db[g].map(n => `
+                    <div class="log-item">
+                        <span>${esc(n)}</span>
+                        <button class="small-btn" style="background:#393e46; color:var(--text-color); flex:0 0 auto;"
+                            data-group="${esc(g)}" data-name="${esc(n)}"
+                            onclick="renameExercise(this.dataset.group, this.dataset.name)">✎ Переименовать</button>
+                    </div>`).join('') : '<span style="color:var(--text-muted); font-size:13px;">Нет упражнений.</span>'}
+            `).join('');
+        }
+
+        // Переименование меняет название везде: в списке, истории, рекордах,
+        // единицах измерения, черновике и в карточках текущей сессии.
+        function renameExercise(group, oldName) {
+            const input = prompt('Новое название упражнения:', oldName);
+            if (input === null) return;
+            const newName = input.trim();
+            if (!newName || newName === oldName) return;
+            if (exerciseExists(newName, oldName)) { alert('Упражнение с таким названием уже есть.'); return; }
+            const inHistory = get(LS.history).some(s => (s.exercises || []).some(e => e.exerciseName === newName));
+            if (inHistory && !confirm(`В истории уже есть «${newName}». Объединить историю этих упражнений?`)) return;
+
+            const db = getDB();
+            db[group] = db[group].map(n => n === oldName ? newName : n);
+            setObj(LS.exdb, db);
+
+            const hist = get(LS.history);
+            hist.forEach(s => (s.exercises || []).forEach(e => { if (e.exerciseName === oldName) e.exerciseName = newName; }));
+            set(LS.history, hist);
+
+            const prs = get(LS.pr_log);
+            prs.forEach(pr => { if (pr.exercise === oldName) pr.exercise = newName; });
+            set(LS.pr_log, prs);
+
+            const units = getObj(LS.units);
+            if (units[oldName]) {
+                if (!units[newName]) units[newName] = units[oldName];
+                delete units[oldName];
+                setObj(LS.units, units);
+            }
+
+            const draft = JSON.parse(localStorage.getItem(LS.draft) || 'null');
+            if (draft) {
+                (draft.exercises || []).forEach(e => { if (e.exerciseName === oldName) e.exerciseName = newName; });
+                localStorage.setItem(LS.draft, JSON.stringify(draft));
+            }
+
+            document.querySelectorAll('#exercises-container .exercise-card').forEach(card => {
+                if (card.dataset.name !== oldName) return;
+                card.dataset.name = newName;
+                card.querySelector('.ex-title').textContent = newName;
+            });
+
+            const sel = document.getElementById('exercise-select');
+            const selected = sel.value;
+            populateExercises();
+            sel.value = selected === oldName ? newName : selected;
+            saveDraft();
+            renderExerciseManager();
+            renderHistory();
         }
 
         function addExercise() {
@@ -1082,7 +1202,7 @@
             const unit = forceUnit || (last ? last.unit : getUnitPref(name));
             const uL = unitLabel(unit);
 
-            let lastBlock = `<div class="last-perf">Прошлый раз: данных нет — базовая точка отсчёта.</div>`;
+            let lastBlock = `<div class="last-perf">Прошлый раз: данных нет.</div>`;
             let suggestionHTML = '';
 
             if (last) {
@@ -1100,24 +1220,22 @@
                         <br><button class="btn-repeat" onclick="repeatLast(this)">↺ Повторить прошлые значения</button>
                     </div>`;
 
-                // Smart suggestion
-                const sug = getSmartSuggestion(last.working);
+                const sug = getSmartSuggestion(last.working, last.unit);
                 if (sug) {
                     suggestionHTML = `
                         <div class="suggestion-box">
-                            <div class="title">💡 Рекомендация на след. раз</div>
+                            <div class="title">💡 Рекомендация на сегодня</div>
                             <div>${sug.text}</div>
-                            <button onclick="applySuggestion(this, '${name}')" 
+                            <button onclick="applySuggestion(this)" 
                                     style="margin-top:6px; background:#00adb5; padding:6px 14px; font-size:12px; width:auto;">
                                 Применить
                             </button>
                         </div>`;
                 }
 
-                // Plateau warning
                 const plateauDays = checkPlateau(name);
                 if (plateauDays) {
-                    suggestionHTML += `<div style="margin-top:6px;"><span class="plateau-badge">Плато ${plateauDays}</span></div>`;
+                    suggestionHTML += `<div style="margin-top:6px;"><span class="plateau-badge">Плато: ${plateauDays} дн. без роста 1ПМ</span></div>`;
                 }
             }
             
@@ -1128,15 +1246,14 @@
             }).join('');
 
             return `
-            <div class="exercise-card" data-name="${name}" data-group="${group}" data-unit="${unit}">
+            <div class="exercise-card" data-name="${esc(name)}" data-group="${esc(group)}" data-unit="${unit}">
                 <div class="ex-head">
-                    <h3 style="font-size: 18px; color: var(--accent-color);">${name}</h3>
+                    <h3 class="ex-title" style="font-size: 18px; color: var(--accent-color);">${esc(name)}</h3>
                     <div class="ex-controls">
                         <select class="unit-select" onchange="changeUnit(this)">
                             <option value="kg" ${unit === 'kg' ? 'selected' : ''}>кг</option>
                             <option value="lb" ${unit === 'lb' ? 'selected' : ''}>lb</option>
                         </select>
-                        <span class="tempo-tag">3-0-1-0</span>
                         <button class="btn-remove-ex" onclick="removeExercise(this)" title="Убрать">✕</button>
                     </div>
                 </div>
@@ -1162,26 +1279,32 @@
             </div>`;
         }
 
-        function applySuggestion(btn, exerciseName) {
+        function fillFromLast(card, last) {
+            if (last.unit !== card.dataset.unit) {
+                const sel = card.querySelector('.unit-select');
+                sel.value = last.unit;
+                changeUnit(sel);
+            }
+            const c = card.querySelector('.working-sets');
+            const uL = unitLabel(card.dataset.unit);
+            while (c.children.length < last.working.length) c.insertAdjacentHTML('beforeend', workingRowHTML(uL));
+            return c.querySelectorAll('.working-row');
+        }
+
+        function applySuggestion(btn) {
             const card = btn.closest('.exercise-card');
-            if (!card) return;
-            
-            const last = lastPerformance(exerciseName);
+            const last = card && lastPerformance(card.dataset.name);
             if (!last || !last.working.length) return;
+            const sug = getSmartSuggestion(last.working, last.unit);
+            if (!sug) return;
 
-            const firstWorking = card.querySelector('.working-row');
-            if (!firstWorking) return;
-
-            const lastSet = last.working[0];
-            const unit = card.dataset.unit || 'kg';
-            const uL = unitLabel(unit);
-
-            // Simple logic: increase weight by 2.5 if possible
-            const currentW = parseFloat(firstWorking.querySelector('.inp-w').value) || parseFloat(lastSet.weight) || 0;
-            const newW = (currentW + 2.5).toFixed(1);
-
-            firstWorking.querySelector('.inp-w').value = newW;
-            firstWorking.querySelector('.inp-r').value = lastSet.reps || '8';
+            const rows = fillFromLast(card, last);
+            last.working.forEach((s, i) => {
+                if (!rows[i]) return;
+                const w = parseFloat(s.weight) || 0, r = parseFloat(s.reps) || 0;
+                rows[i].querySelector('.inp-w').value = sug.action === 'weight' ? +(w + sug.step).toFixed(2) : (s.weight || '');
+                rows[i].querySelector('.inp-r').value = sug.action === 'reps' && r ? r + 1 : (s.reps || '');
+            });
 
             recalcVolume();
             saveDraft();
@@ -1231,15 +1354,7 @@
             const card = btn.closest('.exercise-card');
             const last = lastPerformance(card.dataset.name);
             if (!last) return;
-            if (last.unit !== card.dataset.unit) {
-                const sel = card.querySelector('.unit-select');
-                sel.value = last.unit;
-                changeUnit(sel);
-            }
-            const c = card.querySelector('.working-sets');
-            const uL = unitLabel(card.dataset.unit);
-            while (c.children.length < last.working.length) c.insertAdjacentHTML('beforeend', workingRowHTML(uL));
-            const rows = c.querySelectorAll('.working-row');
+            const rows = fillFromLast(card, last);
             last.working.forEach((s, i) => {
                 if (!rows[i]) return;
                 rows[i].querySelector('.inp-w').value = s.weight || '';
@@ -1302,12 +1417,13 @@
         }
         
         function sendNativeNotification() {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification("⏱ Отдых окончен!", { 
-                    body: "Пора делать следующий подход.", 
-                    icon: "icon.png",
-                    vibrate: [200, 100, 200]
-                });
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            const title = '⏱ Отдых окончен!';
+            const opts = { body: 'Пора делать следующий подход.', vibrate: [200, 100, 200] };
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => reg.showNotification(title, opts)).catch(() => {});
+            } else {
+                try { new Notification(title, opts); } catch (e) {}
             }
         }
 
@@ -1366,7 +1482,6 @@
             h.unshift(sessionData); 
             set(LS.history, h);
 
-            // NEW: Detect and show PRs
             detectNewPRs(sessionData);
 
             endSessionUI(); 
@@ -1378,7 +1493,7 @@
             }, 80);
         }
 
-        // ===================== CALENDAR =====================
+        // Календарь
         function renderCalendar() {
             const container = document.getElementById('activity-calendar');
             if (!container) return;
@@ -1416,7 +1531,7 @@
             container.innerHTML = html;
         }
 
-        // ===================== HISTORY =====================
+        // История
         function renderHistory() {
             const events = [];
             for (const s of get(LS.history)) {
@@ -1470,7 +1585,7 @@
                     const warm = ex.warmup || [], work = ex.working || [];
                     if (!warm.length && !work.length) return;
                     const uL = unitLabel(ex.unit || 'kg');
-                    body += `<div style="margin-left:10px; margin-top:5px;"><strong>${ex.exerciseName}</strong> <span style="color:var(--text-muted); font-size:11px;">[${uL}]</span>`;
+                    body += `<div style="margin-left:10px; margin-top:5px;"><strong>${esc(ex.exerciseName)}</strong> <span style="color:var(--text-muted); font-size:11px;">[${uL}]</span>`;
                     if (ex.bestE1RM) body += ` <span class="pr-badge">1ПМ ${ex.bestE1RM}</span>`;
                     if (warm.length) body += `<br><span style="color:var(--text-muted); font-size:12px;">Разминка:</span> ` +
                         warm.map(x => `${x.weight}${uL}×${x.reps} <span class="rest-badge">⏱️${x.rest}</span>`).join(' | ');
@@ -1480,7 +1595,7 @@
                 });
                 return `<div class="ev-item ev-workout">
                     <div class="ev-head">
-                        <div><strong>🏋️ Тренировка</strong> <span class="ev-time">${time}</span> — ${s.muscleGroup}<br>
+                        <div><strong>🏋️ Тренировка</strong> <span class="ev-time">${time}</span> — ${esc(s.muscleGroup)}<br>
                             <span class="vol-tag">Σ ${vol} кг</span>${dur} <span style="font-size:12px">${readinessStr}</span>
                         </div>
                         <button class="btn-del" onclick="deleteEntry('${LS.history}','${s.id}')">✕</button>
@@ -1488,7 +1603,6 @@
                     ${body}
                 </div>`;
             }
-            // ... other event types remain the same (water, weight, etc.)
             if (e.type === 'water') {
                 return `<div class="ev-item ev-water"><div class="ev-head">
                     <div>💧 <strong>+${e.data.ml} мл</strong> <span class="ev-time">${time}</span></div>
@@ -1546,11 +1660,11 @@
         
         function clearAllHistory() {
             if (!confirm('Полностью очистить ВСЁ?')) return;
-            [LS.history, LS.water, LS.weight, LS.sauna, LS.pool, LS.sleep, LS.caffeine, LS.supplements, LS.pr_log].forEach(k => localStorage.removeItem(k));
+            [LS.history, LS.water, LS.weight, LS.sauna, LS.pool, LS.sleep, LS.caffeine, LS.supplements, LS.pr_log, LS.draft].forEach(k => localStorage.removeItem(k));
             renderAll();
         }
 
-        // ===================== OTHER MODULES (water, sleep, etc. - unchanged for brevity) =====================
+        // Сон, кофеин, вода, вес, сауна, бассейн
         function addSleep() {
             const startVal = document.getElementById('sleep-start').value;
             const endVal = document.getElementById('sleep-end').value;
@@ -1614,7 +1728,7 @@
                 : '<span style="color:var(--text-muted)">Пусто.</span>';
         }
 
-        // ===================== ДОБАВКИ (креатин / магний) =====================
+        // Добавки (креатин, магний)
         const SUPPLEMENTS = {
             creatine:  { name: 'Креатин', dose: '5 г' },
             magnesium: { name: 'Магний',  dose: '1 таблетка' }
@@ -1685,12 +1799,25 @@
             document.getElementById('water-input').value = '';
             addWater(v);
         }
+        function getWaterGoal() {
+            const v = parseInt(localStorage.getItem(LS.waterGoal), 10);
+            return v > 0 ? v : 2000;
+        }
+        function saveWaterGoal() {
+            const v = parseInt(document.getElementById('water-goal-input').value, 10);
+            if (!v || v < 100 || v > 20000) { alert('Укажи цель от 100 до 20000 мл.'); return; }
+            localStorage.setItem(LS.waterGoal, String(v));
+            renderWater();
+        }
         function renderWater() {
             const h = get(LS.water);
             const todaySum = h.filter(x => x.day === todayKey()).reduce((s, x) => s + (x.ml || 0), 0);
             document.getElementById('water-today').innerText = todaySum;
             
-            const goal = 2000;
+            const goal = getWaterGoal();
+            document.getElementById('water-goal').innerText = goal;
+            const goalInput = document.getElementById('water-goal-input');
+            if (document.activeElement !== goalInput) goalInput.value = goal;
             const pct = Math.min(100, Math.round((todaySum / goal) * 100));
             const progress = document.getElementById('water-progress');
             progress.style.width = `${pct}%`;
@@ -1785,86 +1912,111 @@
             }).join('') : '<span style="color:var(--text-muted)">Пусто.</span>';
         }
 
-        // ===================== EXPORT / IMPORT =====================
+        // Экспорт и импорт
         function exportData() {
-            const payload = {
-                version: 6,
-                exported: new Date().toISOString(),
-                workout_history: get(LS.history),
-                custom_exercises: getObj(LS.custom),
-                exercise_units: getObj(LS.units),
-                water_log: get(LS.water),
-                bodyweight_log: get(LS.weight),
-                sauna_log: get(LS.sauna),
-                pool_log: get(LS.pool),
-                sleep_log: get(LS.sleep),
-                caffeine_log: get(LS.caffeine),
-                supplements_log: get(LS.supplements),
-                pr_log: get(LS.pr_log)
-            };
+            const payload = { version: 7, exported: new Date().toISOString() };
+            LOG_KEYS.forEach(key => payload[key] = get(key));
+            payload.exercise_db = getDB();
+            payload.exercise_units = getObj(LS.units);
+            payload.water_goal = localStorage.getItem(LS.waterGoal) ? getWaterGoal() : null;
+
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; 
-            a.download = `workout_progression_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.download = `workout_backup_${new Date().toISOString().slice(0, 10)}.json`;
             a.click(); 
             URL.revokeObjectURL(url);
         }
-        
+
+        let pendingImport = null;
+
         function importData(input) {
             const file = input.files[0];
+            input.value = '';
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                try {
-                    const d = JSON.parse(e.target.result);
-                    const replace = confirm('OK — Заменить все данные.\nОтмена — Добавить к текущим.');
-                    const merge = (key, incoming) => {
-                        if (!Array.isArray(incoming)) return;
-                        if (replace) { set(key, incoming); return; }
-                        const merged = [...get(key), ...incoming];
-                        const seen = new Set();
-                        const dedup = merged.filter(x => {
-                            if (x.id == null) return true;
-                            if (seen.has(x.id)) return false;
-                            seen.add(x.id); return true;
-                        });
-                        dedup.sort((a, b) => (b.id || 0) - (a.id || 0));
-                        set(key, dedup);
-                    };
-                    merge(LS.history, d.workout_history);
-                    merge(LS.water, d.water_log);
-                    merge(LS.weight, d.bodyweight_log);
-                    merge(LS.sauna, d.sauna_log);
-                    merge(LS.pool, d.pool_log);
-                    merge(LS.sleep, d.sleep_log);
-                    merge(LS.caffeine, d.caffeine_log);
-                    merge(LS.supplements, d.supplements_log);
-                    merge(LS.pr_log, d.pr_log || []);
-                    
-                    if (d.custom_exercises) {
-                        const cur = getObj(LS.custom);
-                        for (const g of Object.keys(d.custom_exercises)) {
-                            cur[g] = Array.from(new Set([...(cur[g] || []), ...d.custom_exercises[g]]));
-                        }
-                        setObj(LS.custom, cur);
-                    }
-                    if (d.exercise_units) {
-                        const cur = getObj(LS.units); 
-                        Object.assign(cur, d.exercise_units); 
-                        setObj(LS.units, cur);
-                    }
-                    renderAll();
-                    alert('Импорт завершён.');
-                } catch (err) { 
-                    alert('Не удалось прочитать файл.'); 
-                }
+                let d;
+                try { d = JSON.parse(e.target.result); } catch (err) { alert('Не удалось прочитать файл.'); return; }
+                const known = d && typeof d === 'object' &&
+                    (LOG_KEYS.some(k => Array.isArray(d[k])) || d.exercise_db || d.custom_exercises);
+                if (!known) { alert('В файле нет данных трекера.'); return; }
+
+                pendingImport = d;
+                const lines = LOG_KEYS
+                    .filter(k => Array.isArray(d[k]) && d[k].length)
+                    .map(k => `${LOG_TITLES[k]}: ${d[k].length}`);
+                const when = d.exported ? new Date(d.exported).toLocaleString('ru-RU') : '';
+                document.getElementById('import-summary').innerHTML =
+                    (when ? `<div style="color:var(--text-muted)">Копия от ${esc(when)}</div>` : '') +
+                    (lines.length ? lines.map(esc).join('<br>') : 'Записей нет, только настройки.');
+                document.getElementById('import-modal').classList.add('open');
             };
             reader.readAsText(file);
-            input.value = '';
         }
 
-        // ===================== CHARTS (ENHANCED WITH E1RM) =====================
+        function cancelImport() {
+            pendingImport = null;
+            document.getElementById('import-modal').classList.remove('open');
+        }
+
+        // Объединение без дублей: записи сравниваются по содержимому (без id),
+        // с учётом количества, поэтому повторный импорт того же файла ничего не удвоит.
+        function mergeLogs(current, incoming) {
+            const keyOf = (x) => { const { id, ...rest } = x || {}; return JSON.stringify(rest); };
+            const counts = new Map();
+            current.forEach(x => { const k = keyOf(x); counts.set(k, (counts.get(k) || 0) + 1); });
+            const added = [];
+            incoming.forEach(x => {
+                const k = keyOf(x), c = counts.get(k) || 0;
+                if (c > 0) counts.set(k, c - 1); else added.push(x);
+            });
+            return [...current, ...added].sort((a, b) => (b.ts || b.id || 0) - (a.ts || a.id || 0));
+        }
+
+        function applyImport(mode) {
+            const d = pendingImport;
+            cancelImport();
+            if (!d) return;
+            const replace = mode === 'replace';
+
+            LOG_KEYS.forEach(key => {
+                const incoming = Array.isArray(d[key]) ? d[key] : [];
+                set(key, replace ? incoming : mergeLogs(get(key), incoming));
+            });
+
+            const incomingDb = d.exercise_db || (d.custom_exercises ? buildDB(d.custom_exercises) : null);
+            if (replace) {
+                setObj(LS.exdb, incomingDb || buildDB());
+            } else if (incomingDb) {
+                const db = getDB();
+                for (const g of Object.keys(incomingDb)) {
+                    db[g] = db[g] || [];
+                    for (const n of incomingDb[g]) if (!exerciseExists(n) && !db[g].includes(n)) db[g].push(n);
+                }
+                setObj(LS.exdb, db);
+            }
+
+            const incomingUnits = d.exercise_units || {};
+            setObj(LS.units, replace ? incomingUnits : { ...incomingUnits, ...getObj(LS.units) });
+
+            if (replace) {
+                if (d.water_goal) localStorage.setItem(LS.waterGoal, String(d.water_goal));
+                else localStorage.removeItem(LS.waterGoal);
+            } else if (d.water_goal && !localStorage.getItem(LS.waterGoal)) {
+                localStorage.setItem(LS.waterGoal, String(d.water_goal));
+            }
+
+            fixDuplicateIds();
+            renderAll();
+            populateExercises();
+            renderExerciseManager();
+            if (currentTab === 'charts') renderCharts();
+            alert(replace ? 'Данные заменены.' : 'Данные добавлены.');
+        }
+
+        // Графики
         const CHART_W = 400, CHART_TICK = '#888', CHART_GRID = '#333';
         
         function lineChartSVG({ values, labels, yFmt = (v) => Math.round(v).toString(), color = '#00adb5', height = 200, secondaryValues = null, secondaryColor = '#ffd369' }) {
@@ -1958,11 +2110,10 @@
         
         function renderCharts() {
             const exList = getExerciseList(), exSel = document.getElementById('charts-exercise-select'), prev = exSel.value;
-            exSel.innerHTML = exList.length ? exList.map(n => `<option value="${n}">${n}</option>`).join('') : '<option value="">— нет упражнений —</option>';
+            exSel.innerHTML = exList.length ? exList.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') : '<option value="">— нет упражнений —</option>';
             if (exList.includes(prev)) exSel.value = prev; 
             renderExerciseChart();
             
-            // Other charts remain the same (volume, weight, etc.)
             const wk = getVolumeByWeek(8);
             document.getElementById('chart-volume').innerHTML = barChartSVG({ 
                 values: wk.map(x => x.total), 
@@ -2075,7 +2226,7 @@
             return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">${grid}${bars}${xLbls}</svg>`;
         }
 
-        // ===================== INIT =====================
+        // Запуск
         function renderAll() {
             renderHistory(); 
             renderCalendar(); 
@@ -2086,9 +2237,14 @@
             renderWeight(); 
             renderSauna(); 
             renderPool();
+            renderExerciseManager();
             if (sessionActive) populateExercises();
         }
         
+        // Просим браузер не удалять локальные данные при нехватке места
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+        fixDuplicateIds();
         buildNav();
         checkDraft();
         renderAll();
@@ -2098,8 +2254,6 @@
             if (document.visibilityState === 'visible') renderSupplements();
         });
 
-        // Keyboard shortcut hint
-        console.log('%c[Tracker] Готово. Добавлены: PR система, Estimated 1RM, умные рекомендации, плато-алерты', 'color:#4ecca3');
     </script>
 </body>
 </html>
